@@ -1,0 +1,54 @@
+<?php
+namespace Ostoandel\Providers;
+
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
+
+class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
+{
+
+    public function register()
+    {
+        if (isset($_SERVER['HTTPS']) && !isset($_ENV['HTTPS'])) {
+            $_ENV['HTTPS'] = $_SERVER['HTTPS'] !== 'off';
+        }
+
+        $this->app->singleton(\Illuminate\Routing\Contracts\ControllerDispatcher::class, function($app) {
+            return new \Ostoandel\Routing\ControllerDispatcher($app);
+        });
+    }
+
+    public function boot()
+    {
+        Route::macro('fallbackToCake', function () {
+            $placeholder = 'fallbackPlaceholder';
+
+            Route::any("{{$placeholder}}", function(\Illuminate\Routing\Route $route) {
+                return $route->controllerDispatcher()
+                ->dispatch($route, null, null);
+            })
+            ->where($placeholder, '.*')
+            ->fallback();
+        });
+
+        defined('DS') || define('DS', DIRECTORY_SEPARATOR);
+        defined('ROOT') || define('ROOT', base_path() . DS);
+        defined('APP_DIR') || define('APP_DIR', basename(app_path()));
+        defined('WWW_ROOT') || define('WWW_ROOT', app_path() . DS . 'webroot' . DS);
+        defined('CONFIG') || define('CONFIG', app_path() . DS . 'Config' . DS);
+
+        $boot = false; // Used in Cake/bootstrap.php
+        require_once base_path('lib/Cake/bootstrap.php');
+        defined('TESTS') || define('TESTS', APP . DS . 'Test' . DS);
+
+        // Workaround for the CakeEmail class
+        Config::set('email', true);
+        if (file_exists(CONFIG . 'email.php')) {
+            require_once CONFIG . 'email.php';
+        }
+
+        \App::uses('Router', 'Routing');
+        require CONFIG . 'routes.php';
+    }
+
+}
