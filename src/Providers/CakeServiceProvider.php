@@ -1,8 +1,12 @@
 <?php
 namespace Ostoandel\Providers;
 
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Monolog\Logger;
+use Ostoandel\Log\CakeLogHandler;
 
 class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -35,6 +39,17 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
             })
             ->where($placeholder, '.*')
             ->fallback();
+        });
+
+        Log::extend('cake', function($app, $config) {
+            $engine = $config['engine'];
+            list($plugin, $engine) = pluginSplit($engine, true);
+            if (!Str::endsWith($engine, 'Log')) {
+                $engine .= 'Log';
+            }
+            \App::uses($engine, $plugin . 'Log/Engine');
+            $handler = new CakeLogHandler(new $engine($config), $config['types'] ?? [], $config['scopes'] ?? []);
+            return new Logger($this->parseChannel($config), [ $handler ]);
         });
 
         defined('DS') || define('DS', DIRECTORY_SEPARATOR);
