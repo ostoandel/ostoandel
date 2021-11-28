@@ -16,6 +16,12 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->app->singleton(\Illuminate\Routing\Contracts\ControllerDispatcher::class, function($app) {
             return new \Ostoandel\Routing\ControllerDispatcher($app);
         });
+
+        $this->app->singleton('command.cake', function ($app) {
+            return new \Ostoandel\Console\Commands\CakeCommand();
+        });
+
+        $this->commands(['command.cake']);
     }
 
     public function boot()
