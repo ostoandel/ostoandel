@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Monolog\Logger;
 use Ostoandel\Log\CakeLogHandler;
+use Ostoandel\View\Factory;
 
 class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -19,6 +20,14 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
 
         $this->app->singleton(\Illuminate\Routing\Contracts\ControllerDispatcher::class, function($app) {
             return new \Ostoandel\Routing\ControllerDispatcher($app);
+        });
+
+        $this->app->singleton('view', function ($app) {
+            $factory = new Factory($app['view.engine.resolver'], $app['view.finder'], $app['events']);
+            $factory->setContainer($app);
+            $factory->share('app', $app);
+
+            return $factory;
         });
 
         $this->app->singleton('command.cake', function ($app) {
