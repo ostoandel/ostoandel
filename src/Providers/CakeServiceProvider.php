@@ -1,12 +1,14 @@
 <?php
 namespace Ostoandel\Providers;
 
+use Illuminate\Foundation\Bootstrap\BootProviders;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Monolog\Logger;
 use Ostoandel\Log\CakeLogHandler;
+use Ostoandel\Routing\ReverseRoute;
 use Ostoandel\View\Factory;
 
 class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
@@ -77,8 +79,25 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
             require_once CONFIG . 'email.php';
         }
 
-        \App::uses('Router', 'Routing');
-        require CONFIG . 'routes.php';
+        $this->app->afterBootstrapping(BootProviders::class, function() {
+            \App::uses('Router', 'Routing');
+
+            /** @var \Illuminate\Routing\RouteCollection $routes */
+            $routes = Route::getRoutes();
+
+            foreach (array_reverse($routes->getRoutes()) as $route) {
+                /** @var \Illuminate\Routing\Route $route */
+                if ($route->isFallback) {
+                    continue;
+                }
+
+                \Router::connect($route->uri, $route->defaults, [
+                    'routeClass' => ReverseRoute::class,
+                ]);
+            }
+
+            require CONFIG . 'routes.php';
+        });
     }
 
 }
