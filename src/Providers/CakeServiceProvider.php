@@ -1,9 +1,11 @@
 <?php
 namespace Ostoandel\Providers;
 
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Bootstrap\BootProviders;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Monolog\Logger;
@@ -78,6 +80,16 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
         if (file_exists(CONFIG . 'email.php')) {
             require_once CONFIG . 'email.php';
         }
+
+        Event::listen(QueryExecuted::class, function($event) {
+            $name = $event->connectionName;
+            if (Config::get('database.default') === $name) {
+                $name = 'default';
+            }
+            $db = \ConnectionManager::getDataSource($name);
+            $db->took = $event->time;
+            call_user_func([$db, 'DboSource::logQuery'], $event->sql, $event->bindings);
+        });
 
         $this->app->afterBootstrapping(BootProviders::class, function() {
             \App::uses('Router', 'Routing');
