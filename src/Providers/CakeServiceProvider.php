@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Monolog\Logger;
+use Ostoandel\Event\LaravelEventManager;
 use Ostoandel\Log\CakeLogHandler;
 use Ostoandel\Routing\ReverseRoute;
 use Ostoandel\View\Factory;
@@ -54,6 +55,15 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
             ->fallback();
         });
 
+        Event::macro('listenForCake', function($className, $eventName, $callable) {
+            Event::listen($eventName, function($event) use ($className, $callable) {
+                $subject = $event->subject();
+                if (is_a($subject, $className)) {
+                    return $callable($subject, ...array_values($event->data));
+                }
+            });
+        });
+
         Log::extend('cake', function($app, $config) {
             $engine = $config['engine'];
             list($plugin, $engine) = pluginSplit($engine, true);
@@ -90,6 +100,8 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
             $db->took = $event->time;
             call_user_func([$db, 'DboSource::logQuery'], $event->sql, $event->bindings);
         });
+
+        LaravelEventManager::instance(new LaravelEventManager());
 
         $this->app->afterBootstrapping(BootProviders::class, function() {
             \App::uses('Router', 'Routing');
