@@ -38,15 +38,21 @@ class LaravelDispatcher extends \Dispatcher
         $controller = Str::snake($controller);
 
         $action = $this->route->getActionMethod();
+        $prefix = ltrim($this->route->getPrefix(), '/');
 
         $params = $this->route->parameters;
 
         $reserved = [
+            'prefix' => $prefix,
             'controller' => $controller,
             'action' => $action,
             'pass' => [],
             'named' => [],
         ];
+
+        if ($prefix) {
+            $reserved[$prefix] = true;
+        }
 
         $conflict = array_intersect_key($params, $reserved);
         if ($conflict) {
