@@ -7,12 +7,14 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
 use Monolog\Logger;
 use Ostoandel\Event\LaravelEventManager;
 use Ostoandel\Log\CakeLogHandler;
 use Ostoandel\Routing\ReverseRoute;
 use Ostoandel\View\Factory;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -53,6 +55,33 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
             })
             ->where($placeholder, '.*')
             ->fallback();
+        });
+
+        Response::macro('fromCake', function(\CakeResponse $response, $content = null) {
+            if ($content === null) {
+                $content = $response->body();
+            }
+
+            if ($content instanceof \Symfony\Component\HttpFoundation\Response) {
+                $symfonyResponse = $content;
+            } else {
+                if (is_bool($content)) {
+                    $content = (int)$content;
+                }
+                $symfonyResponse = Response::make($content, $response->statusCode(), $response->header());
+            }
+
+            foreach ($response->cookie() as $cookie) {
+                $symfonyResponse->headers->setCookie(new Cookie(
+                    $cookie['name'],
+                    $cookie['value'],
+                    $cookie['expire'],
+                    $cookie['path'],
+                    $cookie['domain'],
+                    $cookie['secure']
+                ));
+            }
+            return $symfonyResponse;
         });
 
         Event::macro('listenForCake', function($className, $eventName, $callable) {

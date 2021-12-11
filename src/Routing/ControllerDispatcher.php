@@ -1,7 +1,7 @@
 <?php
 namespace Ostoandel\Routing;
 
-use Symfony\Component\HttpFoundation\Cookie;
+use Illuminate\Support\Facades\Response;
 
 \App::uses('CakeRequest', 'Network');
 \App::uses('CakeResponse', 'Network');
@@ -26,19 +26,7 @@ class ControllerDispatcher extends \Illuminate\Routing\ControllerDispatcher
         $request['return'] = -1;
         $content = $dispatcher->dispatch($request, $response);
 
-        $laravelResponse = response($content, $response->statusCode(), $response->header());
-        foreach ($response->cookie() as $cookie) {
-            $laravelResponse->cookie(new Cookie(
-                $cookie['name'],
-                $cookie['value'],
-                $cookie['expire'],
-                $cookie['path'],
-                $cookie['domain'],
-                $cookie['secure']
-            ));
-        }
-
-        return $laravelResponse;
+        return Response::fromCake($response, $content);
     }
 
 }
