@@ -37,6 +37,10 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
             return $factory;
         });
 
+        $this->app->singleton('session', function ($app) {
+            return new \Ostoandel\Session\SessionManager($app);
+        });
+
         $this->app->singleton('command.cake', function ($app) {
             return new \Ostoandel\Console\Commands\CakeCommand();
         });
