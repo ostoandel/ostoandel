@@ -4,6 +4,7 @@ namespace Ostoandel\Providers;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Bootstrap\BootProviders;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +15,7 @@ use Ostoandel\Event\LaravelEventManager;
 use Ostoandel\Log\CakeLogHandler;
 use Ostoandel\Routing\ReverseRoute;
 use Ostoandel\View\Factory;
+use Ostoandel\Cache\CakeStore;
 use Symfony\Component\HttpFoundation\Cookie;
 
 class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
@@ -95,6 +97,20 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
                     return $callable($subject, ...array_values($event->data));
                 }
             });
+        });
+
+        Cache::extend('cake', function($app, $config) {
+            $engine = $config['engine'];
+            list($plugin, $engine) = pluginSplit($engine, true);
+            $engine .= 'Engine';
+            \App::uses('CacheEngine', 'Cache');
+            \App::uses($engine, $plugin . 'Cache/Engine');
+            $instance = new $engine();
+            $instance->init($config);
+            if ($instance->settings['probability'] && time() % $instance->settings['probability'] === 0) {
+                $instance->gc();
+            }
+            return $this->repository(new CakeStore($instance));
         });
 
         Log::extend('cake', function($app, $config) {
