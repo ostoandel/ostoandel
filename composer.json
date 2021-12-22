@@ -1,0 +1,10 @@
+{
+    "name": "ostoandel/ostoandel",
+    "description": "Enables to run CakePHP2 applications on Laravel",
+    "license": "MIT",
+	"autoload": {
+		"psr-4": {
+			"Ostoandel\\": "src"
+		}
+	}
+}
