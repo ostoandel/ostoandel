@@ -129,9 +129,10 @@ class CakeServiceProvider extends \Illuminate\Support\ServiceProvider
         defined('APP_DIR') || define('APP_DIR', basename(app_path()));
         defined('WWW_ROOT') || define('WWW_ROOT', app_path() . DS . 'webroot' . DS);
         defined('CONFIG') || define('CONFIG', app_path() . DS . 'Config' . DS);
+        defined('CAKE_CORE_INCLUDE_PATH') || define('CAKE_CORE_INCLUDE_PATH', base_path() . DS . 'lib');
 
         $boot = false; // Used in Cake/bootstrap.php
-        require_once base_path('lib/Cake/bootstrap.php');
+        require_once CAKE_CORE_INCLUDE_PATH . DS . 'Cake' . DS . 'bootstrap.php';
         defined('TESTS') || define('TESTS', APP . DS . 'Test' . DS);
 
         // Workaround for the CakeEmail class
