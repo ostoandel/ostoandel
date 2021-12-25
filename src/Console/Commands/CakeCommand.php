@@ -40,7 +40,7 @@ class CakeCommand extends Command
      */
     public function handle()
     {
-        require base_path('lib/Cake/Console/ShellDispatcher.php');
+        require_once CAKE_CORE_INCLUDE_PATH . '/Cake/Console/ShellDispatcher.php';
 
         $argv = $_SERVER['argv'];
         array_shift($argv); // artisan
