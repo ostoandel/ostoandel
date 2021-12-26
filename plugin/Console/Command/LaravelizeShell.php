@@ -56,9 +56,11 @@ class LaravelizeShell extends AppShell
                 case 'artisan':
                     $content = $this->modifyArtisan($sourcePath);
                     break;
+                case 'phpunit.xml':
+                    $content = $this->modifyPhpunitXml($sourcePath);
+                    break;
                 case 'server.php':
                 case 'webpack.mix.js':
-                case 'phpunit.xml':
                     $content = file_get_contents($sourcePath);
                     break;
             }
@@ -167,6 +169,17 @@ class LaravelizeShell extends AppShell
             },
             "{^\\\$app = require_once __DIR__.'/../bootstrap/app.php';$}m" => function($m) {
                 return "require_once ROOT . '/bootstrap/app.php';";
+            },
+        ]);
+    }
+
+    public function modifyPhpunitXml($sourcePath)
+    {
+        return $this->modify($sourcePath, [
+            '{^(\s*)bootstrap="vendor/autoload\.php"$}m' => function($m) {
+                $vendor = basename(VENDORS);
+                return "$m[1]bootstrap=\"$vendor/autoload.php\"\n"
+                    . "$m[1]backupGlobals=\"false\"";
             },
         ]);
     }
